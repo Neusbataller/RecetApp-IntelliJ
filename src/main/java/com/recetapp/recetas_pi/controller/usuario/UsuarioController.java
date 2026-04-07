@@ -28,6 +28,14 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/usuarios")
 @Validated
+/**
+ * Controlador REST para la gestión de usuarios.
+ * 
+ * <p>
+ * Cada endpoint está documentado para que entendáis claramente
+ * cómo consumirlo, qué datos espera y qué devuelve. Se incluyen ejemplos de uso.
+ * </p>
+ */
 public class UsuarioController {
 
     @Autowired
@@ -36,6 +44,22 @@ public class UsuarioController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * Registro de usuario
+     * POST /api/usuarios/register
+     *
+     * Espera un JSON con los datos del usuario y una lista de alergias (opcional).
+     * Ejemplo de request:
+     * {
+     *   "nombre": "Juan",
+     *   "apellidos": "Pérez",
+     *   "correo": "juan@mail.com",
+     *   "password": "123456",
+     *   "alergias": ["Gluten", "Lácteos"]
+     * }
+     *
+     * Responde con el usuario creado (sin password) o error.
+     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UsuarioRegistroRequest req) {
         try {
@@ -53,7 +77,25 @@ public class UsuarioController {
         }
     }
 
-    // POST /login expects a JSON body: { "correo": "...", "password": "..." }
+    /**
+     * Login de usuario (JSON)
+     * POST /api/usuarios/login
+     * Content-Type: application/json
+     *
+     * Espera un JSON:
+     * {
+     *   "correo": "juan@mail.com",
+     *   "password": "123456"
+     * }
+     *
+     * Responde con:
+     * {
+     *   "token": "...JWT...",
+     *   "usuario": { ...datos usuario... }
+     * }
+     *
+     * Si las credenciales son incorrectas, responde 401.
+     */
     @PostMapping(value = "/login", consumes = "application/json")
     public ResponseEntity<?> loginJson(@Valid @RequestBody UsuarioLoginRequest req) {
         Optional<Usuario> usuarioOpt = usuarioService.login(req.getCorreo(), req.getPassword());
@@ -66,7 +108,16 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas");
     }
 
-    // Also accept form-url-encoded POST for convenience (e.g., HTML forms)
+    /**
+     * Login de usuario (formulario)
+     * POST /api/usuarios/login
+     * Content-Type: application/x-www-form-urlencoded
+     *
+     * Ejemplo de request:
+     * correo=juan@mail.com&password=123456
+     *
+     * Responde igual que el login JSON. Útil para formularios HTML.
+     */
     @PostMapping(value = "/login", consumes = org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<?> loginForm(@RequestParam String correo, @RequestParam String password) {
         Optional<Usuario> usuarioOpt = usuarioService.login(correo, password);
@@ -81,6 +132,18 @@ public class UsuarioController {
 
     // (GET /login removed — use POST /login with JSON or form data)
 
+    /**
+     * Obtener usuario por ID
+     * GET /api/usuarios/{id}
+     *
+     * Devuelve los datos del usuario con ese ID. Si no existe, responde 404.
+     * Ejemplo de respuesta:
+     * {
+     *   "id": 1,
+     *   "nombre": "Juan",
+     *   ...
+     * }
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         Optional<Usuario> usuario = usuarioService.getUsuarioById(id);
@@ -90,6 +153,20 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
     }
 
+    /**
+     * Actualizar perfil del usuario autenticado
+     * PUT /api/usuarios/me
+     *
+     * Requiere JWT en el header Authorization.
+     * Body (JSON):
+     * {
+     *   "nombre": "Nuevo nombre",
+     *   "apellidos": "Nuevos apellidos",
+     *   "correo": "nuevo@mail.com"
+     * }
+     *
+     * Devuelve el usuario actualizado o error.
+     */
     @PutMapping("/me")
     public ResponseEntity<?> updateMe(@Valid @RequestBody UsuarioPerfilUpdateRequest req) {
         String correoAuth = getCorreoAutenticado();
@@ -109,6 +186,18 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Reemplazar todas las alergias del usuario autenticado
+     * PUT /api/usuarios/me/alergias
+     *
+     * Requiere JWT. Body (JSON):
+     * {
+     *   "alergias": ["Gluten", "Lácteos"]
+     * }
+     *
+     * Sobrescribe la lista de alergias del usuario.
+     * Devuelve el usuario actualizado.
+     */
     @PutMapping("/me/alergias")
     public ResponseEntity<?> updateMisAlergias(@Valid @RequestBody UsuarioAlergiasUpdateRequest req) {
         String correoAuth = getCorreoAutenticado();
@@ -124,6 +213,18 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Agregar alergias al usuario autenticado (sin eliminar las anteriores)
+     * POST /api/usuarios/me/alergias
+     *
+     * Requiere JWT. Body (JSON):
+     * {
+     *   "alergias": ["Mariscos"]
+     * }
+     *
+     * Añade las alergias indicadas a las ya existentes.
+     * Devuelve el usuario actualizado.
+     */
     @PostMapping("/me/alergias")
     public ResponseEntity<?> addMisAlergias(@Valid @RequestBody UsuarioAlergiasUpdateRequest req) {
         String correoAuth = getCorreoAutenticado();
@@ -139,6 +240,15 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Eliminar una alergia específica del usuario autenticado
+     * DELETE /api/usuarios/me/alergias/{nombre}
+     *
+     * Requiere JWT. El parámetro {nombre} es el nombre de la alergia a eliminar.
+     * Ejemplo: DELETE /api/usuarios/me/alergias/Gluten
+     *
+     * Devuelve el usuario actualizado.
+     */
     @DeleteMapping("/me/alergias/{nombre}")
     public ResponseEntity<?> deleteMiAlergia(@PathVariable String nombre) {
         String correoAuth = getCorreoAutenticado();
@@ -154,6 +264,18 @@ public class UsuarioController {
         }
     }
 
+    /**
+     * Cambiar la contraseña del usuario autenticado
+     * PATCH /api/usuarios/me/password
+     *
+     * Requiere JWT. Body (JSON):
+     * {
+     *   "passwordActual": "123456",
+     *   "passwordNueva": "nuevaPassword"
+     * }
+     *
+     * Devuelve mensaje de éxito o error.
+     */
     @PatchMapping("/me/password")
     public ResponseEntity<?> updateMiPassword(@Valid @RequestBody UsuarioPasswordUpdateRequest req) {
         String correoAuth = getCorreoAutenticado();
@@ -169,7 +291,13 @@ public class UsuarioController {
         }
     }
 
-    // Returns the currently authenticated user (based on JWT)
+    /**
+     * Obtener los datos del usuario autenticado (según JWT)
+     * GET /api/usuarios/me
+     *
+     * Requiere JWT. Devuelve los datos del usuario autenticado.
+     * Si el token no es válido, responde 401.
+     */
     @GetMapping("/me")
     public ResponseEntity<?> me() {
         String correoAuth = getCorreoAutenticado();

@@ -18,11 +18,29 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/alergias")
 @Validated
+/**
+ * Controlador REST para la gestión de alergias.
+ *
+ * <p>
+ * Cada endpoint está documentado para que entendáis claramente
+ * cómo consumirlo, qué datos espera y qué devuelve. Se incluyen ejemplos de uso.
+ * </p>
+ */
 public class AlergiaController {
 
     @Autowired
     private AlergiaService alergiaService;
 
+    /**
+     * Obtener todas las alergias
+     * GET /api/alergias
+     *
+     * Devuelve un array de alergias:
+     * [
+     *   { "id": 1, "nombre": "Gluten" },
+     *   { "id": 2, "nombre": "Lácteos" }
+     * ]
+     */
     @GetMapping
     public ResponseEntity<List<AlergiaResponse>> getAll() {
         List<Alergia> alergias = alergiaService.getAll();
@@ -33,6 +51,15 @@ public class AlergiaController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Obtener una alergia por su ID
+     * GET /api/alergias/{id}
+     *
+     * Devuelve la alergia si existe:
+     * { "id": 1, "nombre": "Gluten" }
+     *
+     * Si no existe, responde 404 y mensaje "Alergia no encontrada".
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
         Optional<Alergia> alergia = alergiaService.getById(id);
@@ -42,6 +69,18 @@ public class AlergiaController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Alergia no encontrada");
     }
 
+    /**
+     * Crear una nueva alergia
+     * POST /api/alergias
+     *
+     * Body (JSON):
+     * { "nombre": "Frutos secos" }
+     *
+     * Devuelve la alergia creada:
+     * { "id": 3, "nombre": "Frutos secos" }
+     *
+     * Si el nombre ya existe o hay error, responde 400 y mensaje de error.
+     */
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody AlergiaCreateRequest req) {
         try {
@@ -52,6 +91,18 @@ public class AlergiaController {
         }
     }
 
+    /**
+     * Actualizar el nombre de una alergia
+     * PUT /api/alergias/{id}
+     *
+     * Body (JSON):
+     * { "nombre": "Nuevo nombre" }
+     *
+     * Devuelve la alergia actualizada:
+     * { "id": 1, "nombre": "Nuevo nombre" }
+     *
+     * Si no existe, responde 404. Si hay error, responde 400.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody AlergiaCreateRequest req) {
         try {
@@ -66,6 +117,13 @@ public class AlergiaController {
         }
     }
 
+    /**
+     * Eliminar una alergia por su ID
+     * DELETE /api/alergias/{id}
+     *
+     * Devuelve mensaje de éxito: "Alergia eliminada correctamente"
+     * Si no existe, responde 404 y mensaje de error.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {
