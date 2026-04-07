@@ -52,6 +52,20 @@ public class AlergiaController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody AlergiaCreateRequest req) {
+        try {
+            Alergia updated = alergiaService.update(id, req.getNombre());
+            return ResponseEntity.ok(toResponse(updated));
+        } catch (RuntimeException ex) {
+            String msg = ex.getMessage();
+            if ("Alergia no encontrada".equals(msg)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         try {

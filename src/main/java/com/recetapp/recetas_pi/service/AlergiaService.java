@@ -33,6 +33,20 @@ public class AlergiaService {
         return alergiaRepository.save(alergia);
     }
 
+    public Alergia update(Long id, String nombre) {
+        Alergia alergia = alergiaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Alergia no encontrada"));
+
+        String limpio = nombre.trim();
+        Optional<Alergia> existente = alergiaRepository.findByNombre(limpio);
+        if (existente.isPresent() && !existente.get().getId().equals(id)) {
+            throw new RuntimeException("Ya existe una alergia con ese nombre");
+        }
+
+        alergia.setNombre(limpio);
+        return alergiaRepository.save(alergia);
+    }
+
     public void deleteById(Long id) {
         if (!alergiaRepository.existsById(id)) {
             throw new RuntimeException("Alergia no encontrada");
