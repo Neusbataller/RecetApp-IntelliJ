@@ -11,7 +11,7 @@ public class UsuarioAlergiasUpdateRequest {
     public List<String> getAlergias() {
         return alergias;
     }
-
+    //pepe
     public void setAlergias(List<String> alergias) {
         this.alergias = alergias;
     }
