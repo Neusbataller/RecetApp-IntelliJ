@@ -1,420 +1,346 @@
--- ==========================================
--- BASE DE DATOS: recetas_db
--- Versión corregida con buenas prácticas
--- ==========================================
+-- --------------------------------------------------------
+-- Host:                         127.0.0.1
+-- Versión del servidor:        9.6.0 - Homebrew
+-- SO del servidor:              macos26.3
+-- HeidiSQL Versión:            12.16.1.1
+-- --------------------------------------------------------
 
-CREATE DATABASE IF NOT EXISTS recetas_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE recetas_db;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
--- ==========================================
--- ELIMINACIÓN DE TABLAS (orden por FK)
--- ==========================================
 
-DROP TABLE IF EXISTS usuario_alergias;
-DROP TABLE IF EXISTS lista_recetas;
-DROP TABLE IF EXISTS listas;
-DROP TABLE IF EXISTS favoritos;
-DROP TABLE IF EXISTS receta_categorias;
-DROP TABLE IF EXISTS categorias;
-DROP TABLE IF EXISTS ingredientes_receta;
-DROP TABLE IF EXISTS ingredientes;
-DROP TABLE IF EXISTS valoraciones;
-DROP TABLE IF EXISTS recuperacion_password;
-DROP TABLE IF EXISTS recetas;
-DROP TABLE IF EXISTS usuarios;
-DROP TABLE IF EXISTS alergias;
+-- Volcando estructura de base de datos para recetas_db
+CREATE DATABASE IF NOT EXISTS `recetas_db` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `recetas_db`;
 
--- ==========================================
--- CREACIÓN DE TABLAS
--- ==========================================
+-- Volcando estructura para tabla recetas_db.alergias
+CREATE TABLE IF NOT EXISTS `alergias` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `nombre` (`nombre`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE alergias (
-    id     BIGINT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(100) NOT NULL UNIQUE
-);
+-- Volcando datos para la tabla recetas_db.alergias: ~6 rows (aproximadamente)
+INSERT INTO `alergias` (`id`, `nombre`) VALUES
+	(1, 'Ninguna'),
+	(2, 'Lactosa'),
+	(3, 'Gluten'),
+	(4, 'Frutos secos'),
+	(5, 'Marisco'),
+	(7, 'Lacteos');
 
-CREATE TABLE usuarios (
-    id             BIGINT PRIMARY KEY AUTO_INCREMENT,
-    nombre         VARCHAR(100)        NOT NULL,
-    apellidos      VARCHAR(150)        NOT NULL,
-    correo         VARCHAR(150)        NOT NULL UNIQUE,
-    -- Almacenar siempre el hash (bcrypt), nunca la contraseña en texto plano
-    password_hash  VARCHAR(255)        NOT NULL,
-    fecha_creacion TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+-- Volcando estructura para tabla recetas_db.categorias
+CREATE TABLE IF NOT EXISTS `categorias` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `nombre` (`nombre`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- N:M usuarios ↔ alergias
--- Tabla de unión pura: sin id propio, PK compuesta
-CREATE TABLE usuario_alergias (
-    usuario_id BIGINT NOT NULL,
-    alergia_id BIGINT NOT NULL,
-    PRIMARY KEY (usuario_id, alergia_id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    FOREIGN KEY (alergia_id) REFERENCES alergias(id)  ON DELETE CASCADE
-);
+-- Volcando datos para la tabla recetas_db.categorias: ~8 rows (aproximadamente)
+INSERT INTO `categorias` (`id`, `nombre`) VALUES
+	(1, 'Vegetariano'),
+	(2, 'Vegano'),
+	(3, 'Desayunos'),
+	(4, 'Comidas'),
+	(5, 'Cenas'),
+	(6, 'Postres'),
+	(7, 'Sin Gluten'),
+	(8, 'Rápido');
 
-CREATE TABLE recetas (
-    id                    BIGINT PRIMARY KEY AUTO_INCREMENT,
-    -- CORRECCIÓN: toda receta debe tener un autor
-    usuario_id            BIGINT,
-    titulo                VARCHAR(150)                                     NOT NULL,
-    descripcion           TEXT,
-    preparacion           TEXT,
-    -- Separar tiempos permite filtros más precisos ("lista en <10 min")
-    tiempo_preparacion_min INT UNSIGNED,
-    tiempo_coccion_min     INT UNSIGNED,
-    porciones              TINYINT UNSIGNED,
-    dificultad             ENUM('fácil', 'media', 'difícil'),
-    imagen_url             VARCHAR(500),
-    fecha_creacion         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
-);
+-- Volcando estructura para tabla recetas_db.favoritos
+CREATE TABLE IF NOT EXISTS `favoritos` (
+  `usuario_id` bigint NOT NULL,
+  `receta_id` bigint NOT NULL,
+  `fecha_agregado` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`usuario_id`,`receta_id`),
+  KEY `idx_favoritos_usuario` (`usuario_id`),
+  KEY `idx_favoritos_receta` (`receta_id`),
+  CONSTRAINT `favoritos_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `favoritos_ibfk_2` FOREIGN KEY (`receta_id`) REFERENCES `recetas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Catálogo de ingredientes independiente (permite filtrar recetas por ingrediente)
-CREATE TABLE ingredientes (
-    id     BIGINT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(150) NOT NULL UNIQUE
-);
+-- Volcando datos para la tabla recetas_db.favoritos: ~3 rows (aproximadamente)
+INSERT INTO `favoritos` (`usuario_id`, `receta_id`, `fecha_agregado`) VALUES
+	(1, 1, '2026-04-08 07:52:36'),
+	(2, 4, '2026-04-08 07:52:36'),
+	(3, 6, '2026-04-08 07:52:36');
 
--- Relación ingrediente ↔ receta con cantidad y unidad
--- Tabla de unión pura: PK compuesta, sin id propio
-CREATE TABLE ingredientes_receta (
-    receta_id      BIGINT         NOT NULL,
-    ingrediente_id BIGINT         NOT NULL,
-    cantidad       DECIMAL(10, 2),
-    unidad         VARCHAR(50),
-    PRIMARY KEY (receta_id, ingrediente_id),
-    FOREIGN KEY (receta_id)      REFERENCES recetas(id)      ON DELETE CASCADE,
-    FOREIGN KEY (ingrediente_id) REFERENCES ingredientes(id) ON DELETE CASCADE
-);
+-- Volcando estructura para tabla recetas_db.ingredientes
+CREATE TABLE IF NOT EXISTS `ingredientes` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `nombre` (`nombre`)
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE categorias (
-    id     BIGINT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(100) NOT NULL UNIQUE
-);
+-- Volcando datos para la tabla recetas_db.ingredientes: ~24 rows (aproximadamente)
+INSERT INTO `ingredientes` (`id`, `nombre`) VALUES
+	(1, 'Masa para pizza'),
+	(2, 'Salsa de tomate'),
+	(3, 'Queso mozzarella'),
+	(4, 'Lechuga romana'),
+	(5, 'Pechuga de pollo'),
+	(6, 'Salsa César'),
+	(7, 'Avena'),
+	(8, 'Huevo'),
+	(9, 'Plátano maduro'),
+	(10, 'Leche o bebida vegetal'),
+	(11, 'Garbanzos cocidos'),
+	(12, 'Espinacas frescas'),
+	(13, 'Leche de coco'),
+	(14, 'Curry en polvo'),
+	(15, 'Chocolate negro 70%'),
+	(16, 'Mantequilla'),
+	(17, 'Huevos'),
+	(18, 'Azúcar'),
+	(19, 'Harina'),
+	(20, 'Pollo'),
+	(21, 'Tortillas de maíz'),
+	(22, 'Piña en trozos'),
+	(23, 'Espinacas'),
+	(24, 'Manzana verde');
 
--- Tabla de unión pura: PK compuesta, sin id propio
-CREATE TABLE receta_categorias (
-    receta_id    BIGINT NOT NULL,
-    categoria_id BIGINT NOT NULL,
-    PRIMARY KEY (receta_id, categoria_id),
-    FOREIGN KEY (receta_id)    REFERENCES recetas(id)    ON DELETE CASCADE,
-    FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE
-);
+-- Volcando estructura para tabla recetas_db.ingredientes_receta
+CREATE TABLE IF NOT EXISTS `ingredientes_receta` (
+  `receta_id` bigint NOT NULL,
+  `ingrediente_id` bigint NOT NULL,
+  `cantidad` decimal(10,2) DEFAULT NULL,
+  `unidad` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`receta_id`,`ingrediente_id`),
+  KEY `idx_ingredientes_receta` (`receta_id`),
+  KEY `idx_ingredientes_ing` (`ingrediente_id`),
+  CONSTRAINT `ingredientes_receta_ibfk_1` FOREIGN KEY (`receta_id`) REFERENCES `recetas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ingredientes_receta_ibfk_2` FOREIGN KEY (`ingrediente_id`) REFERENCES `ingredientes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE favoritos (
-    usuario_id    BIGINT    NOT NULL,
-    receta_id     BIGINT    NOT NULL,
-    fecha_agregado TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (usuario_id, receta_id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    FOREIGN KEY (receta_id)  REFERENCES recetas(id)  ON DELETE CASCADE
-);
+-- Volcando datos para la tabla recetas_db.ingredientes_receta: ~24 rows (aproximadamente)
+INSERT INTO `ingredientes_receta` (`receta_id`, `ingrediente_id`, `cantidad`, `unidad`) VALUES
+	(1, 1, 1.00, 'unidad'),
+	(1, 2, 150.00, 'ml'),
+	(1, 3, 200.00, 'g'),
+	(2, 4, 1.00, 'unidad'),
+	(2, 5, 200.00, 'g'),
+	(2, 6, 50.00, 'ml'),
+	(3, 7, 60.00, 'g'),
+	(3, 8, 1.00, 'unidad'),
+	(3, 9, 1.00, 'unidad'),
+	(3, 10, 50.00, 'ml'),
+	(4, 11, 400.00, 'g'),
+	(4, 12, 150.00, 'g'),
+	(4, 13, 250.00, 'ml'),
+	(4, 14, 2.00, 'cucharadas'),
+	(5, 15, 200.00, 'g'),
+	(5, 16, 100.00, 'g'),
+	(5, 17, 3.00, 'unidades'),
+	(5, 18, 150.00, 'g'),
+	(5, 19, 80.00, 'g'),
+	(6, 20, 500.00, 'g'),
+	(6, 21, 8.00, 'unidades'),
+	(6, 22, 100.00, 'g'),
+	(7, 23, 1.00, 'taza'),
+	(7, 24, 1.00, 'unidad');
 
-CREATE TABLE valoraciones (
-    id             BIGINT PRIMARY KEY AUTO_INCREMENT,
-    usuario_id     BIGINT            NOT NULL,
-    receta_id      BIGINT            NOT NULL,
-    puntuacion     TINYINT UNSIGNED  NOT NULL CHECK (puntuacion BETWEEN 1 AND 5),
-    comentario     TEXT,
-    fecha_creacion TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (usuario_id, receta_id),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    FOREIGN KEY (receta_id)  REFERENCES recetas(id)  ON DELETE CASCADE
-);
-
-CREATE TABLE listas (
-    id             BIGINT PRIMARY KEY AUTO_INCREMENT,
-    usuario_id     BIGINT        NOT NULL,
-    nombre         VARCHAR(100)  NOT NULL,
-    imagen_url     VARCHAR(500),
-    fecha_creacion TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (usuario_id, nombre),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
-
--- Tabla de unión pura: PK compuesta, sin id propio
-CREATE TABLE lista_recetas (
-    lista_id       BIGINT    NOT NULL,
-    receta_id      BIGINT    NOT NULL,
-    fecha_agregado TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (lista_id, receta_id),
-    FOREIGN KEY (lista_id)   REFERENCES listas(id)  ON DELETE CASCADE,
-    FOREIGN KEY (receta_id)  REFERENCES recetas(id) ON DELETE CASCADE
-);
-
-CREATE TABLE recuperacion_password (
-    id               BIGINT PRIMARY KEY AUTO_INCREMENT,
-    usuario_id       BIGINT       NOT NULL,
-    token            VARCHAR(255) NOT NULL UNIQUE,
-    fecha_creacion   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    fecha_expiracion DATETIME     NOT NULL,
-    usado            BOOLEAN      NOT NULL DEFAULT FALSE,
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-);
-
--- ==========================================
--- ÍNDICES EXPLÍCITOS
--- Las FK no crean índices automáticamente en todas las configuraciones.
--- Son críticos para el rendimiento en JOINs y filtros frecuentes.
--- ==========================================
-
-CREATE INDEX idx_recetas_usuario      ON recetas(usuario_id);
-CREATE INDEX idx_recetas_dificultad   ON recetas(dificultad);
-CREATE INDEX idx_ingredientes_receta  ON ingredientes_receta(receta_id);
-CREATE INDEX idx_ingredientes_ing     ON ingredientes_receta(ingrediente_id);
-CREATE INDEX idx_favoritos_usuario    ON favoritos(usuario_id);
-CREATE INDEX idx_favoritos_receta     ON favoritos(receta_id);
-CREATE INDEX idx_lista_recetas_lista  ON lista_recetas(lista_id);
-CREATE INDEX idx_lista_recetas_receta ON lista_recetas(receta_id);
-CREATE INDEX idx_valoraciones_receta  ON valoraciones(receta_id);
-CREATE INDEX idx_recuperacion_token   ON recuperacion_password(token);
--- Índice parcial para limpiar tokens expirados/usados de forma eficiente
-CREATE INDEX idx_recuperacion_limpieza ON recuperacion_password(fecha_expiracion, usado);
-
--- ==========================================
--- DATOS DE PRUEBA (MOCKS)
--- IMPORTANTE: Las contraseñas deben ser hashes bcrypt.
--- Los valores de ejemplo son hashes reales de '123456' y 'hasheado123'.
--- Nunca insertes contraseñas en texto plano, ni siquiera en desarrollo.
--- ==========================================
-
--- 1. Alergias
-INSERT IGNORE INTO alergias (nombre) VALUES
-    ('Ninguna'),
-    ('Lactosa'),
-    ('Gluten'),
-    ('Frutos secos'),
-    ('Marisco');
-
--- 2. Usuarios (con password_hash, no texto plano)
-INSERT INTO usuarios (nombre, apellidos, correo, password_hash) VALUES
-    ('Borja',  'García',   'test@app.com',       '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW'),
-    ('Ana',    'López',    'ana.lopez@app.com',  '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW'),
-    ('Carlos', 'Martínez', 'carlos.m@app.com',   '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW'),
-    ('Laura',  'Gómez',    'laura.g@app.com',    '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW');
-
--- Variables de usuario
-SET @id_borja  = (SELECT id FROM usuarios WHERE correo = 'test@app.com'       LIMIT 1);
-SET @id_ana    = (SELECT id FROM usuarios WHERE correo = 'ana.lopez@app.com'  LIMIT 1);
-SET @id_carlos = (SELECT id FROM usuarios WHERE correo = 'carlos.m@app.com'   LIMIT 1);
-SET @id_laura  = (SELECT id FROM usuarios WHERE correo = 'laura.g@app.com'    LIMIT 1);
-
--- Variables de alergia
-SET @al_ninguna = (SELECT id FROM alergias WHERE nombre = 'Ninguna'      LIMIT 1);
-SET @al_lactosa = (SELECT id FROM alergias WHERE nombre = 'Lactosa'      LIMIT 1);
-SET @al_gluten  = (SELECT id FROM alergias WHERE nombre = 'Gluten'       LIMIT 1);
-
--- 3. Asignación de alergias
-INSERT INTO usuario_alergias (usuario_id, alergia_id) VALUES
-    (@id_borja,  @al_ninguna),
-    (@id_ana,    @al_lactosa),
-    (@id_carlos, @al_ninguna),
-    (@id_laura,  @al_gluten);
-
--- 4. Categorías
-INSERT IGNORE INTO categorias (nombre) VALUES
-    ('Vegetariano'),
-    ('Vegano'),
-    ('Desayunos'),
-    ('Comidas'),
-    ('Cenas'),
-    ('Postres'),
-    ('Sin Gluten'),
-    ('Rápido');
-
--- 5. Recetas (con usuario_id, porciones, dificultad y tiempos separados)
-INSERT INTO recetas (usuario_id, titulo, descripcion, preparacion, tiempo_preparacion_min, tiempo_coccion_min, porciones, dificultad, imagen_url) VALUES
-    (@id_borja,  'Pizza Margarita',    'Clásica pizza italiana con albahaca.',
-     '1. Amasar. 2. Poner tomate y queso. 3. Hornear a 220° 15 min.',
-     10, 15, 2, 'fácil',   'https://images.unsplash.com/photo-1574071318508-1cdbab80d002'),
-
-    (@id_borja,  'Ensalada César',     'Fresca ensalada con pollo y salsa César.',
-     '1. Cortar lechuga. 2. Hacer pollo a la plancha. 3. Mezclar con salsa.',
-     15, 0,  2, 'fácil',   'https://images.unsplash.com/photo-1550304943-4f24f54ddde9'),
-
-    (@id_ana,    'Tortitas de Avena',  'Desayuno saludable y rápido, ideal para empezar el día.',
-     '1. Triturar avena. 2. Mezclar con huevo y plátano. 3. Hacer a la plancha.',
-     10, 5,  2, 'fácil',   'https://images.unsplash.com/photo-1528207776546-365bb710ee93'),
-
-    (@id_ana,    'Curry de Garbanzos', 'Plato vegano lleno de sabor y especias orientales.',
-     '1. Sofreír cebolla. 2. Añadir especias y tomate. 3. Cocer garbanzos y leche de coco 10 min.',
-     10, 15, 4, 'fácil',   'https://images.unsplash.com/photo-1585937421612-70a008356fbe'),
-
-    (@id_carlos, 'Brownie de Chocolate','Postre clásico, denso y jugoso por dentro.',
-     '1. Fundir chocolate y mantequilla. 2. Mezclar huevos y azúcar. 3. Hornear a 180° 20 min.',
-     15, 20, 8, 'media',   'https://images.unsplash.com/photo-1606313564200-e75d5e30476c'),
-
-    (@id_carlos, 'Tacos al Pastor',    'Auténtico sabor de la calle mexicana en casa.',
-     '1. Macerar pollo con achiote. 2. Freír. 3. Servir en tortillas con piña y cilantro.',
-     20, 10, 4, 'media',   'https://images.unsplash.com/photo-1565299585323-38d6b0865bfc'),
-
-    (@id_laura,  'Batido Verde',       'Smoothie detox con espinacas y manzana.',
-     '1. Lavar ingredientes. 2. Triturar todo con hielo en la batidora.',
-     5,  0,  1, 'fácil',   'https://images.unsplash.com/photo-1610832958506-aa56368176cf');
-
--- Variables de receta
-SET @id_pizza    = (SELECT id FROM recetas WHERE titulo = 'Pizza Margarita'    LIMIT 1);
-SET @id_ensalada = (SELECT id FROM recetas WHERE titulo = 'Ensalada César'     LIMIT 1);
-SET @id_tortitas = (SELECT id FROM recetas WHERE titulo = 'Tortitas de Avena'  LIMIT 1);
-SET @id_curry    = (SELECT id FROM recetas WHERE titulo = 'Curry de Garbanzos' LIMIT 1);
-SET @id_brownie  = (SELECT id FROM recetas WHERE titulo = 'Brownie de Chocolate' LIMIT 1);
-SET @id_tacos    = (SELECT id FROM recetas WHERE titulo = 'Tacos al Pastor'    LIMIT 1);
-SET @id_batido   = (SELECT id FROM recetas WHERE titulo = 'Batido Verde'       LIMIT 1);
-
--- 6. Catálogo de ingredientes
-INSERT IGNORE INTO ingredientes (nombre) VALUES
-    ('Masa para pizza'), ('Salsa de tomate'), ('Queso mozzarella'),
-    ('Lechuga romana'), ('Pechuga de pollo'), ('Salsa César'),
-    ('Avena'), ('Huevo'), ('Plátano maduro'), ('Leche o bebida vegetal'),
-    ('Garbanzos cocidos'), ('Espinacas frescas'), ('Leche de coco'), ('Curry en polvo'),
-    ('Chocolate negro 70%'), ('Mantequilla'), ('Huevos'), ('Azúcar'), ('Harina'),
-    ('Pollo'), ('Tortillas de maíz'), ('Piña en trozos'),
-    ('Espinacas'), ('Manzana verde');
-
--- 7. Relación ingredientes ↔ recetas
--- Pizza Margarita
-SET @ing_masa        = (SELECT id FROM ingredientes WHERE nombre = 'Masa para pizza'   LIMIT 1);
-SET @ing_tomate      = (SELECT id FROM ingredientes WHERE nombre = 'Salsa de tomate'   LIMIT 1);
-SET @ing_mozzarella  = (SELECT id FROM ingredientes WHERE nombre = 'Queso mozzarella'  LIMIT 1);
-INSERT INTO ingredientes_receta (receta_id, ingrediente_id, cantidad, unidad) VALUES
-    (@id_pizza, @ing_masa,       1,   'unidad'),
-    (@id_pizza, @ing_tomate,     150, 'ml'),
-    (@id_pizza, @ing_mozzarella, 200, 'g');
-
--- Ensalada César
-SET @ing_lechuga = (SELECT id FROM ingredientes WHERE nombre = 'Lechuga romana'   LIMIT 1);
-SET @ing_pollo   = (SELECT id FROM ingredientes WHERE nombre = 'Pechuga de pollo' LIMIT 1);
-SET @ing_cesar   = (SELECT id FROM ingredientes WHERE nombre = 'Salsa César'      LIMIT 1);
-INSERT INTO ingredientes_receta (receta_id, ingrediente_id, cantidad, unidad) VALUES
-    (@id_ensalada, @ing_lechuga, 1,  'unidad'),
-    (@id_ensalada, @ing_pollo,   200,'g'),
-    (@id_ensalada, @ing_cesar,   50, 'ml');
-
--- Tortitas de Avena
-SET @ing_avena   = (SELECT id FROM ingredientes WHERE nombre = 'Avena'                LIMIT 1);
-SET @ing_huevo   = (SELECT id FROM ingredientes WHERE nombre = 'Huevo'                LIMIT 1);
-SET @ing_platano = (SELECT id FROM ingredientes WHERE nombre = 'Plátano maduro'       LIMIT 1);
-SET @ing_leche   = (SELECT id FROM ingredientes WHERE nombre = 'Leche o bebida vegetal' LIMIT 1);
-INSERT INTO ingredientes_receta (receta_id, ingrediente_id, cantidad, unidad) VALUES
-    (@id_tortitas, @ing_avena,   60, 'g'),
-    (@id_tortitas, @ing_huevo,   1,  'unidad'),
-    (@id_tortitas, @ing_platano, 1,  'unidad'),
-    (@id_tortitas, @ing_leche,   50, 'ml');
-
--- Curry de Garbanzos
-SET @ing_garbanzos = (SELECT id FROM ingredientes WHERE nombre = 'Garbanzos cocidos' LIMIT 1);
-SET @ing_espinacas = (SELECT id FROM ingredientes WHERE nombre = 'Espinacas frescas' LIMIT 1);
-SET @ing_lcococo   = (SELECT id FROM ingredientes WHERE nombre = 'Leche de coco'     LIMIT 1);
-SET @ing_curry     = (SELECT id FROM ingredientes WHERE nombre = 'Curry en polvo'    LIMIT 1);
-INSERT INTO ingredientes_receta (receta_id, ingrediente_id, cantidad, unidad) VALUES
-    (@id_curry, @ing_garbanzos, 400, 'g'),
-    (@id_curry, @ing_espinacas, 150, 'g'),
-    (@id_curry, @ing_lcococo,   250, 'ml'),
-    (@id_curry, @ing_curry,     2,   'cucharadas');
-
--- Brownie de Chocolate
-SET @ing_choco  = (SELECT id FROM ingredientes WHERE nombre = 'Chocolate negro 70%' LIMIT 1);
-SET @ing_mant   = (SELECT id FROM ingredientes WHERE nombre = 'Mantequilla'         LIMIT 1);
-SET @ing_huevos = (SELECT id FROM ingredientes WHERE nombre = 'Huevos'              LIMIT 1);
-SET @ing_azucar = (SELECT id FROM ingredientes WHERE nombre = 'Azúcar'              LIMIT 1);
-SET @ing_harina = (SELECT id FROM ingredientes WHERE nombre = 'Harina'              LIMIT 1);
-INSERT INTO ingredientes_receta (receta_id, ingrediente_id, cantidad, unidad) VALUES
-    (@id_brownie, @ing_choco,  200, 'g'),
-    (@id_brownie, @ing_mant,   100, 'g'),
-    (@id_brownie, @ing_huevos, 3,   'unidades'),
-    (@id_brownie, @ing_azucar, 150, 'g'),
-    (@id_brownie, @ing_harina, 80,  'g');
-
--- Tacos al Pastor
-SET @ing_pollo_t  = (SELECT id FROM ingredientes WHERE nombre = 'Pollo'            LIMIT 1);
-SET @ing_tortilla = (SELECT id FROM ingredientes WHERE nombre = 'Tortillas de maíz' LIMIT 1);
-SET @ing_pina     = (SELECT id FROM ingredientes WHERE nombre = 'Piña en trozos'   LIMIT 1);
-INSERT INTO ingredientes_receta (receta_id, ingrediente_id, cantidad, unidad) VALUES
-    (@id_tacos, @ing_pollo_t,  500, 'g'),
-    (@id_tacos, @ing_tortilla, 8,   'unidades'),
-    (@id_tacos, @ing_pina,     100, 'g');
-
--- Batido Verde
-SET @ing_espinacas_b = (SELECT id FROM ingredientes WHERE nombre = 'Espinacas'   LIMIT 1);
-SET @ing_manzana     = (SELECT id FROM ingredientes WHERE nombre = 'Manzana verde' LIMIT 1);
-INSERT INTO ingredientes_receta (receta_id, ingrediente_id, cantidad, unidad) VALUES
-    (@id_batido, @ing_espinacas_b, 1, 'taza'),
-    (@id_batido, @ing_manzana,     1, 'unidad');
-
--- 8. Receta ↔ Categorías
--- Usamos IDs directos para mayor claridad (Vegetariano=1, Vegano=2, Desayunos=3,
--- Comidas=4, Cenas=5, Postres=6, Sin Gluten=7, Rápido=8)
-SET @cat_veg  = (SELECT id FROM categorias WHERE nombre = 'Vegetariano' LIMIT 1);
-SET @cat_vgn  = (SELECT id FROM categorias WHERE nombre = 'Vegano'      LIMIT 1);
-SET @cat_des  = (SELECT id FROM categorias WHERE nombre = 'Desayunos'   LIMIT 1);
-SET @cat_com  = (SELECT id FROM categorias WHERE nombre = 'Comidas'     LIMIT 1);
-SET @cat_cen  = (SELECT id FROM categorias WHERE nombre = 'Cenas'       LIMIT 1);
-SET @cat_pos  = (SELECT id FROM categorias WHERE nombre = 'Postres'     LIMIT 1);
-SET @cat_sgl  = (SELECT id FROM categorias WHERE nombre = 'Sin Gluten'  LIMIT 1);
-SET @cat_rap  = (SELECT id FROM categorias WHERE nombre = 'Rápido'      LIMIT 1);
-
-INSERT INTO receta_categorias (receta_id, categoria_id) VALUES
-    (@id_pizza,    @cat_cen), (@id_pizza,    @cat_veg),
-    (@id_ensalada, @cat_com),
-    (@id_tortitas, @cat_des), (@id_tortitas, @cat_veg), (@id_tortitas, @cat_rap),
-    (@id_curry,    @cat_vgn), (@id_curry,    @cat_com), (@id_curry,    @cat_sgl),
-    (@id_brownie,  @cat_pos), (@id_brownie,  @cat_veg),
-    (@id_tacos,    @cat_com), (@id_tacos,    @cat_cen), (@id_tacos,    @cat_sgl),
-    (@id_batido,   @cat_des), (@id_batido,   @cat_vgn), (@id_batido,   @cat_rap), (@id_batido, @cat_sgl);
-
--- 9. Favoritos
-INSERT INTO favoritos (usuario_id, receta_id) VALUES
-    (@id_borja,  @id_pizza),
-    (@id_ana,    @id_curry),
-    (@id_carlos, @id_tacos);
-
--- 10. Listas de Borja
-INSERT INTO listas (usuario_id, nombre) VALUES
-    (@id_borja, 'Desayuno'),
-    (@id_borja, 'Almuerzo'),
-    (@id_borja, 'Comida'),
-    (@id_borja, 'Merienda'),
-    (@id_borja, 'Cena');
-
-SET @lista_cena_borja = (SELECT id FROM listas WHERE nombre = 'Cena' AND usuario_id = @id_borja LIMIT 1);
-INSERT INTO lista_recetas (lista_id, receta_id) VALUES
-    (@lista_cena_borja, @id_pizza),
-    (@lista_cena_borja, @id_tacos);
-
--- Listas de Ana y Carlos
-INSERT INTO listas (usuario_id, nombre) VALUES
-    (@id_ana,    'Detox / Saludable'),
-    (@id_carlos, 'Cheat Meals');
-
-SET @lista_detox  = (SELECT id FROM listas WHERE nombre = 'Detox / Saludable' AND usuario_id = @id_ana    LIMIT 1);
-SET @lista_cheat  = (SELECT id FROM listas WHERE nombre = 'Cheat Meals'        AND usuario_id = @id_carlos LIMIT 1);
-
-INSERT INTO lista_recetas (lista_id, receta_id) VALUES
-    (@lista_detox, @id_batido),
-    (@lista_detox, @id_curry),
-    (@lista_cheat, @id_brownie),
-    (@lista_cheat, @id_pizza);
-
--- 11. Valoraciones de prueba
-INSERT INTO valoraciones (usuario_id, receta_id, puntuacion, comentario) VALUES
-    (@id_ana,    @id_pizza,   4, 'Muy buena, la hice con masa casera y quedó genial.'),
-    (@id_borja,  @id_curry,   5, 'Me encantó, le añadí un poco más de curry.'),
-    (@id_laura,  @id_batido,  5, 'Perfecto para después del gym.'),
-    (@id_carlos, @id_brownie, 5, 'El mejor brownie que he probado.');
-
--- ==========================================
--- EVENTO: limpieza automática de tokens caducados
--- Requiere que el event_scheduler esté activo:
---   SET GLOBAL event_scheduler = ON;
--- ==========================================
-
-DROP EVENT IF EXISTS limpiar_tokens_expirados;
-
-CREATE EVENT limpiar_tokens_expirados
-    ON SCHEDULE EVERY 1 DAY
-    STARTS CURRENT_TIMESTAMP
-    DO
-    DELETE FROM recuperacion_password
+-- Volcando estructura para evento recetas_db.limpiar_tokens_expirados
+DELIMITER //
+CREATE EVENT `limpiar_tokens_expirados` ON SCHEDULE EVERY 1 DAY STARTS '2026-04-08 09:52:36' ON COMPLETION NOT PRESERVE ENABLE DO DELETE FROM recuperacion_password
     WHERE usado = TRUE
-       OR fecha_expiracion < NOW();
+       OR fecha_expiracion < NOW()//
+DELIMITER ;
+
+-- Volcando estructura para tabla recetas_db.listas
+CREATE TABLE IF NOT EXISTS `listas` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `usuario_id` bigint NOT NULL,
+  `nombre` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `imagen_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `usuario_id` (`usuario_id`,`nombre`),
+  CONSTRAINT `listas_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Volcando datos para la tabla recetas_db.listas: ~7 rows (aproximadamente)
+INSERT INTO `listas` (`id`, `usuario_id`, `nombre`, `imagen_url`, `fecha_creacion`) VALUES
+	(1, 1, 'Desayuno', NULL, '2026-04-08 07:52:36'),
+	(2, 1, 'Almuerzo', NULL, '2026-04-08 07:52:36'),
+	(3, 1, 'Comida', NULL, '2026-04-08 07:52:36'),
+	(4, 1, 'Merienda', NULL, '2026-04-08 07:52:36'),
+	(5, 1, 'Cena', NULL, '2026-04-08 07:52:36'),
+	(6, 2, 'Detox / Saludable', NULL, '2026-04-08 07:52:36'),
+	(7, 3, 'Cheat Meals', NULL, '2026-04-08 07:52:36');
+
+-- Volcando estructura para tabla recetas_db.lista_recetas
+CREATE TABLE IF NOT EXISTS `lista_recetas` (
+  `lista_id` bigint NOT NULL,
+  `receta_id` bigint NOT NULL,
+  `fecha_agregado` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`lista_id`,`receta_id`),
+  KEY `idx_lista_recetas_lista` (`lista_id`),
+  KEY `idx_lista_recetas_receta` (`receta_id`),
+  CONSTRAINT `lista_recetas_ibfk_1` FOREIGN KEY (`lista_id`) REFERENCES `listas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `lista_recetas_ibfk_2` FOREIGN KEY (`receta_id`) REFERENCES `recetas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Volcando datos para la tabla recetas_db.lista_recetas: ~6 rows (aproximadamente)
+INSERT INTO `lista_recetas` (`lista_id`, `receta_id`, `fecha_agregado`) VALUES
+	(5, 1, '2026-04-08 07:52:36'),
+	(5, 6, '2026-04-08 07:52:36'),
+	(6, 4, '2026-04-08 07:52:36'),
+	(6, 7, '2026-04-08 07:52:36'),
+	(7, 1, '2026-04-08 07:52:36'),
+	(7, 5, '2026-04-08 07:52:36');
+
+-- Volcando estructura para tabla recetas_db.recetas
+CREATE TABLE IF NOT EXISTS `recetas` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `usuario_id` bigint DEFAULT NULL,
+  `titulo` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `descripcion` text COLLATE utf8mb4_unicode_ci,
+  `preparacion` text COLLATE utf8mb4_unicode_ci,
+  `tiempo_preparacion_min` int unsigned DEFAULT NULL,
+  `tiempo_coccion_min` int unsigned DEFAULT NULL,
+  `porciones` int DEFAULT NULL,
+  `dificultad` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `imagen_url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_recetas_usuario` (`usuario_id`),
+  KEY `idx_recetas_dificultad` (`dificultad`),
+  CONSTRAINT `recetas_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Volcando datos para la tabla recetas_db.recetas: ~7 rows (aproximadamente)
+INSERT INTO `recetas` (`id`, `usuario_id`, `titulo`, `descripcion`, `preparacion`, `tiempo_preparacion_min`, `tiempo_coccion_min`, `porciones`, `dificultad`, `imagen_url`, `fecha_creacion`) VALUES
+	(1, 1, 'Pizza Margarita', 'Clásica pizza italiana con albahaca.', '1. Amasar. 2. Poner tomate y queso. 3. Hornear a 220° 15 min.', 10, 15, 2, 'fácil', 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002', '2026-04-08 07:52:36'),
+	(2, 1, 'Ensalada César', 'Fresca ensalada con pollo y salsa César.', '1. Cortar lechuga. 2. Hacer pollo a la plancha. 3. Mezclar con salsa.', 15, 0, 2, 'fácil', 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9', '2026-04-08 07:52:36'),
+	(3, 2, 'Tortitas de Avena', 'Desayuno saludable y rápido, ideal para empezar el día.', '1. Triturar avena. 2. Mezclar con huevo y plátano. 3. Hacer a la plancha.', 10, 5, 2, 'fácil', 'https://images.unsplash.com/photo-1528207776546-365bb710ee93', '2026-04-08 07:52:36'),
+	(4, 2, 'Curry de Garbanzos', 'Plato vegano lleno de sabor y especias orientales.', '1. Sofreír cebolla. 2. Añadir especias y tomate. 3. Cocer garbanzos y leche de coco 10 min.', 10, 15, 4, 'fácil', 'https://images.unsplash.com/photo-1585937421612-70a008356fbe', '2026-04-08 07:52:36'),
+	(5, 3, 'Brownie de Chocolate', 'Postre clásico, denso y jugoso por dentro.', '1. Fundir chocolate y mantequilla. 2. Mezclar huevos y azúcar. 3. Hornear a 180° 20 min.', 15, 20, 8, 'media', 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c', '2026-04-08 07:52:36'),
+	(6, 3, 'Tacos al Pastor', 'Auténtico sabor de la calle mexicana en casa.', '1. Macerar pollo con achiote. 2. Freír. 3. Servir en tortillas con piña y cilantro.', 20, 10, 4, 'media', 'https://images.unsplash.com/photo-1565299585323-38d6b0865bfc', '2026-04-08 07:52:36'),
+	(7, 4, 'Batido Verde', 'Smoothie detox con espinacas y manzana.', '1. Lavar ingredientes. 2. Triturar todo con hielo en la batidora.', 5, 0, 1, 'fácil', 'https://images.unsplash.com/photo-1610832958506-aa56368176cf', '2026-04-08 07:52:36');
+
+-- Volcando estructura para tabla recetas_db.receta_categorias
+CREATE TABLE IF NOT EXISTS `receta_categorias` (
+  `receta_id` bigint NOT NULL,
+  `categoria_id` bigint NOT NULL,
+  PRIMARY KEY (`receta_id`,`categoria_id`),
+  KEY `categoria_id` (`categoria_id`),
+  CONSTRAINT `receta_categorias_ibfk_1` FOREIGN KEY (`receta_id`) REFERENCES `recetas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `receta_categorias_ibfk_2` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Volcando datos para la tabla recetas_db.receta_categorias: ~18 rows (aproximadamente)
+INSERT INTO `receta_categorias` (`receta_id`, `categoria_id`) VALUES
+	(1, 1),
+	(1, 5),
+	(2, 4),
+	(3, 1),
+	(3, 3),
+	(3, 8),
+	(4, 2),
+	(4, 4),
+	(4, 7),
+	(5, 1),
+	(5, 6),
+	(6, 4),
+	(6, 5),
+	(6, 7),
+	(7, 2),
+	(7, 3),
+	(7, 7),
+	(7, 8);
+
+-- Volcando estructura para tabla recetas_db.recuperacion_password
+CREATE TABLE IF NOT EXISTS `recuperacion_password` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `usuario_id` bigint NOT NULL,
+  `token` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_expiracion` datetime NOT NULL,
+  `usado` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `token` (`token`),
+  KEY `usuario_id` (`usuario_id`),
+  KEY `idx_recuperacion_token` (`token`),
+  KEY `idx_recuperacion_limpieza` (`fecha_expiracion`,`usado`),
+  CONSTRAINT `recuperacion_password_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Volcando datos para la tabla recetas_db.recuperacion_password: ~0 rows (aproximadamente)
+
+-- Volcando estructura para tabla recetas_db.usuarios
+CREATE TABLE IF NOT EXISTS `usuarios` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `apellidos` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `correo` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `correo` (`correo`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Volcando datos para la tabla recetas_db.usuarios: ~4 rows (aproximadamente)
+INSERT INTO `usuarios` (`id`, `nombre`, `apellidos`, `correo`, `password`, `fecha_creacion`) VALUES
+	(1, 'Borja', 'García', 'test@app.com', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', '2026-04-08 07:52:36'),
+	(2, 'Ana', 'López', 'ana.lopez@app.com', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', '2026-04-08 07:52:36'),
+	(3, 'Carlos', 'Martínez', 'carlos.m@app.com', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', '2026-04-08 07:52:36'),
+	(4, 'Laura', 'Gómez', 'laura.g@app.com', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', '2026-04-08 07:52:36'),
+	(5, 'Juan', 'Perez', 'juan@example.com', '$2a$10$jWsU5ebb.m3AI6zwT3nXXeW3A0tNRCFXKdMbtS7eTi2pXQ4VhULPq', '2026-04-08 07:57:39');
+
+-- Volcando estructura para tabla recetas_db.usuario_alergias
+CREATE TABLE IF NOT EXISTS `usuario_alergias` (
+  `usuario_id` bigint NOT NULL,
+  `alergia_id` bigint NOT NULL,
+  PRIMARY KEY (`usuario_id`,`alergia_id`),
+  KEY `alergia_id` (`alergia_id`),
+  CONSTRAINT `usuario_alergias_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `usuario_alergias_ibfk_2` FOREIGN KEY (`alergia_id`) REFERENCES `alergias` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Volcando datos para la tabla recetas_db.usuario_alergias: ~4 rows (aproximadamente)
+INSERT INTO `usuario_alergias` (`usuario_id`, `alergia_id`) VALUES
+	(1, 1),
+	(2, 2),
+	(3, 1),
+	(4, 3),
+	(5, 3),
+	(5, 7);
+
+-- Volcando estructura para tabla recetas_db.valoraciones
+CREATE TABLE IF NOT EXISTS `valoraciones` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `usuario_id` bigint NOT NULL,
+  `receta_id` bigint NOT NULL,
+  `puntuacion` tinyint unsigned NOT NULL,
+  `comentario` text COLLATE utf8mb4_unicode_ci,
+  `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `usuario_id` (`usuario_id`,`receta_id`),
+  KEY `idx_valoraciones_receta` (`receta_id`),
+  CONSTRAINT `valoraciones_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `valoraciones_ibfk_2` FOREIGN KEY (`receta_id`) REFERENCES `recetas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `valoraciones_chk_1` CHECK ((`puntuacion` between 1 and 5))
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Volcando datos para la tabla recetas_db.valoraciones: ~4 rows (aproximadamente)
+INSERT INTO `valoraciones` (`id`, `usuario_id`, `receta_id`, `puntuacion`, `comentario`, `fecha_creacion`) VALUES
+	(1, 2, 1, 4, 'Muy buena, la hice con masa casera y quedó genial.', '2026-04-08 07:52:36'),
+	(2, 1, 4, 5, 'Me encantó, le añadí un poco más de curry.', '2026-04-08 07:52:36'),
+	(3, 4, 7, 5, 'Perfecto para después del gym.', '2026-04-08 07:52:36'),
+	(4, 3, 5, 5, 'El mejor brownie que he probado.', '2026-04-08 07:52:36');
+
+/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+recetas_db
