@@ -2,8 +2,7 @@
 
 > ⚠️ **Nota importante:**
 >
-> La API se encuentra en contante desarrollo, por ahora he desarrollado los siguientes endpoints.
-Esta API permite gestionar usuarios, alergias y recetas, facilitando la integración con aplicaciones móviles como React Native.
+> La API se encuentra en constante desarrollo...
 
 ---
 
