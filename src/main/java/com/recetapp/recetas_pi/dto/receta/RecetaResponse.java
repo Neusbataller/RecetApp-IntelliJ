@@ -1,78 +1,37 @@
-package com.recetapp.recetas_pi.model;
-
-import jakarta.persistence.*;
-import lombok.Data;
+package com.recetapp.recetas_pi.dto.receta;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Entity
-@Table(name = "recetas")
-@Data
-public class Receta {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class RecetaResponse {
     private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "usuario_id")
-    private Usuario usuario;
-
-    @Column(nullable = false, length = 150)
+    private Long usuarioId;
     private String titulo;
-
-    @Column(columnDefinition = "TEXT")
     private String descripcion;
-
-    @Column(columnDefinition = "TEXT")
     private String preparacion;
-
-    @Column(name = "tiempo_preparacion_min")
     private Integer tiempoPreparacionMin;
-
-    @Column(name = "tiempo_coccion_min")
     private Integer tiempoCoccionMin;
-
     private Integer porciones;
-
-    @Column(length = 20)
     private String dificultad;
-
-    @Column(name = "imagen_url", length = 500)
     private String imagenUrl;
-
-    @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
+    private List<RecetaIngredienteResponse> ingredientes;
+    private List<String> tags;
 
-    @OneToMany(mappedBy = "receta", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<IngredienteReceta> ingredientesReceta;
-
-    @ManyToMany
-    @JoinTable(
-        name = "receta_categorias",
-        joinColumns = @JoinColumn(name = "receta_id"),
-        inverseJoinColumns = @JoinColumn(name = "categoria_id")
-    )
-    private List<Categoria> categorias;
-
-    @PrePersist
-    public void prePersist() {
-        if (fechaCreacion == null) {
-            fechaCreacion = LocalDateTime.now();
-        }
-    }
-
-    // Explicit getters and setters (useful if Lombok is not active in the IDE)
     public Long getId() {
         return id;
     }
 
-    public Usuario getUsuario() {
-        return usuario;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
+    public Long getUsuarioId() {
+        return usuarioId;
+    }
+
+    public void setUsuarioId(Long usuarioId) {
+        this.usuarioId = usuarioId;
     }
 
     public String getTitulo() {
@@ -147,19 +106,19 @@ public class Receta {
         this.fechaCreacion = fechaCreacion;
     }
 
-    public List<IngredienteReceta> getIngredientesReceta() {
-        return ingredientesReceta;
+    public List<RecetaIngredienteResponse> getIngredientes() {
+        return ingredientes;
     }
 
-    public void setIngredientesReceta(List<IngredienteReceta> ingredientesReceta) {
-        this.ingredientesReceta = ingredientesReceta;
+    public void setIngredientes(List<RecetaIngredienteResponse> ingredientes) {
+        this.ingredientes = ingredientes;
     }
 
-    public List<Categoria> getCategorias() {
-        return categorias;
+    public List<String> getTags() {
+        return tags;
     }
 
-    public void setCategorias(List<Categoria> categorias) {
-        this.categorias = categorias;
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 }

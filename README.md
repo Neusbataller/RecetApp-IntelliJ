@@ -1,4 +1,3 @@
-
 # Recetas API Documentation
 
 > ⚠️ **Nota importante:**
@@ -13,7 +12,7 @@ Bienvenido a la documentación oficial de la API de Recetas. Esta API permite ge
 
 La mayoría de los endpoints requieren autenticación mediante JWT. El token debe enviarse en el header:
 
-```
+```http
 Authorization: Bearer <token>
 ```
 
@@ -73,7 +72,7 @@ await fetch('http://localhost:8080/api/usuarios/register', {
 ```json
 {
   "token": "<jwt>",
-  "usuario": { ...datos usuario... }
+  "usuario": { "id": 1, "nombre": "Juan" }
 }
 ```
 
@@ -100,7 +99,8 @@ const data = await res.json();
 {
   "id": 1,
   "nombre": "Juan",
-  ...
+  "apellidos": "Pérez",
+  "correo": "juan@mail.com"
 }
 ```
 
@@ -125,6 +125,27 @@ await fetch('http://localhost:8080/api/usuarios/me', {
   "correo": "nuevo@mail.com"
 }
 ```
+- **Respuesta:**
+```json
+{
+  "id": 1,
+  "nombre": "Nuevo nombre",
+  "apellidos": "Nuevos apellidos",
+  "correo": "nuevo@mail.com"
+}
+```
+
+#### Ejemplo React Native
+```js
+await fetch('http://localhost:8080/api/usuarios/me', {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify({ nombre, apellidos, correo })
+});
+```
 
 ---
 
@@ -139,11 +160,26 @@ await fetch('http://localhost:8080/api/usuarios/me', {
   "passwordNueva": "nuevaPassword"
 }
 ```
+- **Respuesta:**
+```json
+"Contraseña actualizada correctamente"
+```
+
+#### Ejemplo React Native
+```js
+await fetch('http://localhost:8080/api/usuarios/me/password', {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify({ passwordActual, passwordNueva })
+});
+```
 
 ---
 
 ## Endpoints de Alergias
-
 
 ### Listar todas las alergias
 
@@ -158,24 +194,19 @@ await fetch('http://localhost:8080/api/usuarios/me', {
 
 #### Ejemplo React Native
 ```js
-// Obtener todas las alergias desde la API
 const getAlergias = async () => {
   const response = await fetch('http://localhost:8080/api/alergias');
   if (!response.ok) throw new Error('Error al obtener alergias');
   const alergias = await response.json();
-  return alergias; // [{ id: 1, nombre: 'Gluten' }, ...]
+  return alergias;
 };
 
-// Uso en un componente React Native
 useEffect(() => {
-  getAlergias()
-    .then(setAlergias)
-    .catch(console.error);
+  getAlergias().then(setAlergias).catch(console.error);
 }, []);
 ```
 
 ---
-
 
 ### Crear una alergia
 
@@ -183,6 +214,22 @@ useEffect(() => {
 - **Body:**
 ```json
 { "nombre": "Frutos secos" }
+```
+- **Respuesta:**
+```json
+{ "id": 6, "nombre": "Frutos secos" }
+```
+
+#### Ejemplo React Native
+```js
+await fetch('http://localhost:8080/api/alergias', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify({ nombre: 'Frutos secos' })
+});
 ```
 
 ---
@@ -192,15 +239,260 @@ useEffect(() => {
 - **DELETE** `/api/alergias/{id}`
 - **Descripción:** Este endpoint elimina una alergia de la base de datos. Solo debe ser usado por administradores. Los usuarios normales no pueden eliminar alergias globales.
 - **Respuesta exitosa:**
-```
+```text
 Alergia eliminada correctamente
 ```
 - **Respuesta si no existe:**
-```
+```text
 Alergia no encontrada
 ```
 
+#### Ejemplo React Native
+```js
+await fetch(`http://localhost:8080/api/alergias/${id}`, {
+  method: 'DELETE',
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
 > ⚠️ **Nota:** Los usuarios solo pueden gestionar (agregar/quitar) sus propias alergias personales, pero no pueden eliminar alergias de la base de datos global. Este endpoint es exclusivo para administración.
+
+---
+
+## Endpoints de Recetas
+
+### 1) Listar recetas
+- **GET** `/api/recetas/getAll`
+- **Query opcional:** `titulo`
+- **Body:** sin body
+- **Respuesta:**
+```json
+[
+  {
+    "id": 1,
+    "usuarioId": 1,
+    "titulo": "Pasta rápida",
+    "descripcion": "Ideal para diario",
+    "preparacion": "Hervir pasta y mezclar",
+    "tiempoPreparacionMin": 10,
+    "tiempoCoccionMin": 12,
+    "porciones": 2,
+    "dificultad": "media",
+    "imagenUrl": "https://example.com/pasta.jpg",
+    "fechaCreacion": "2026-04-08T11:00:00",
+    "ingredientes": [
+      { "id": 1, "nombre": "Pasta", "cantidad": 200.00, "unidad": "g" }
+    ],
+    "tags": ["Comidas", "Rápido"]
+  }
+]
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/recetas/getAll?titulo=pasta');
+const recetas = await res.json();
+```
+
+---
+
+### 2) Mis recetas (requiere token)
+- **GET** `/api/recetas/getMine`
+- **Body:** sin body
+- **Respuesta:** array de recetas
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/recetas/getMine', {
+  headers: { Authorization: `Bearer ${token}` }
+});
+const recetas = await res.json();
+```
+
+---
+
+### 3) Buscar por dificultad
+- **GET** `/api/recetas/searchByDificultad?dificultad=media`
+- **Body:** sin body
+- **Respuesta:** array de recetas
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/recetas/searchByDificultad?dificultad=media');
+const recetas = await res.json();
+```
+
+---
+
+### 4) Buscar por tiempo máximo
+- **GET** `/api/recetas/searchByTiempoMax?maxTiempo=30`
+- **Body:** sin body
+- **Respuesta:** array de recetas
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/recetas/searchByTiempoMax?maxTiempo=30');
+const recetas = await res.json();
+```
+
+---
+
+### 5) Búsqueda avanzada
+- **GET** `/api/recetas/searchAdvanced?titulo=pasta&dificultad=media&tag=rapido&ingredientes=tomate,ajo&matchAll=true&maxTiempo=30`
+- **Body:** sin body
+- **Respuesta:** array de recetas
+
+#### Ejemplo React Native
+```js
+const url = 'http://localhost:8080/api/recetas/searchAdvanced?titulo=pasta&dificultad=media&ingredientes=tomate,ajo&matchAll=true&maxTiempo=30';
+const res = await fetch(url);
+const recetas = await res.json();
+```
+
+---
+
+### 6) Buscar por ingrediente
+- **GET** `/api/recetas/searchByIngrediente?ingrediente=tomate`
+- **Body:** sin body
+- **Respuesta:** array de recetas
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/recetas/searchByIngrediente?ingrediente=tomate');
+const recetas = await res.json();
+```
+
+---
+
+### 7) Buscar por varios ingredientes
+- **GET** `/api/recetas/searchByIngredientes?ingredientes=tomate,ajo&matchAll=true`
+- **Body:** sin body
+- **Respuesta:** array de recetas
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/recetas/searchByIngredientes?ingredientes=tomate,ajo&matchAll=true');
+const recetas = await res.json();
+```
+
+---
+
+### 8) Buscar por tag
+- **GET** `/api/recetas/searchByTag?tag=vegano`
+- **Body:** sin body
+- **Respuesta:** array de recetas
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/recetas/searchByTag?tag=vegano');
+const recetas = await res.json();
+```
+
+---
+
+### 9) Obtener receta por id
+- **GET** `/api/recetas/get/{id}`
+- **Body:** sin body
+- **Respuesta:** receta completa
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/recetas/get/${id}`);
+const receta = await res.json();
+```
+
+---
+
+### 10) Crear receta (requiere token)
+- **POST** `/api/recetas/create`
+- **Body:**
+```json
+{
+  "usuarioId": 1,
+  "titulo": "Pasta rápida",
+  "descripcion": "Ideal para diario",
+  "preparacion": "Hervir pasta y mezclar",
+  "tiempoPreparacionMin": 10,
+  "tiempoCoccionMin": 12,
+  "porciones": 2,
+  "dificultad": "media",
+  "imagenUrl": "https://example.com/pasta.jpg",
+  "ingredientes": [
+    { "nombre": "Pasta", "cantidad": 200, "unidad": "g" },
+    { "nombre": "Tomate", "cantidad": 2, "unidad": "ud" }
+  ]
+}
+```
+- **Respuesta:** receta creada
+
+#### Ejemplo React Native
+```js
+const payload = {
+  usuarioId: 1,
+  titulo: 'Pasta rápida',
+  descripcion: 'Ideal para diario',
+  preparacion: 'Hervir pasta y mezclar',
+  tiempoPreparacionMin: 10,
+  tiempoCoccionMin: 12,
+  porciones: 2,
+  dificultad: 'media',
+  imagenUrl: 'https://example.com/pasta.jpg',
+  ingredientes: [
+    { nombre: 'Pasta', cantidad: 200, unidad: 'g' },
+    { nombre: 'Tomate', cantidad: 2, unidad: 'ud' }
+  ]
+};
+
+const res = await fetch('http://localhost:8080/api/recetas/create', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify(payload)
+});
+const receta = await res.json();
+```
+
+---
+
+### 11) Actualizar receta (requiere token)
+- **PUT** `/api/recetas/update/{id}`
+- **Body:** mismo formato que create
+- **Respuesta:** receta actualizada
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/recetas/update/${id}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify(payload)
+});
+const receta = await res.json();
+```
+
+---
+
+### 12) Eliminar receta (requiere token)
+- **DELETE** `/api/recetas/delete/{id}`
+- **Body:** sin body
+- **Respuesta exitosa:**
+```text
+Receta eliminada correctamente
+```
+
+#### Ejemplo React Native
+```js
+await fetch(`http://localhost:8080/api/recetas/delete/${id}`, {
+  method: 'DELETE',
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+---
 
 ## Notas
 - Todos los endpoints devuelven errores en formato `{ "error": "mensaje" }` o texto plano.

@@ -2,7 +2,6 @@ package com.recetapp.recetas_pi.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "ingredientes")
@@ -12,16 +11,19 @@ public class Ingrediente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "receta_id", nullable = false)
-    private Receta receta;
-
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, unique = true, length = 150)
     private String nombre;
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal cantidad;
+    // Explicit getters and setters (useful if Lombok is not active in the IDE)
+    public Long getId() {
+        return id;
+    }
 
-    @Column(length = 50)
-    private String unidad;
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 }

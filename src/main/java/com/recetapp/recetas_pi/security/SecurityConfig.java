@@ -21,8 +21,14 @@ public class SecurityConfig {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html"
+                ).permitAll()
                 .requestMatchers("/api/usuarios/register", "/api/usuarios/login").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/alergias", "/api/alergias/*").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/recetas", "/api/recetas/**").permitAll()
                 .anyRequest().authenticated()
             );
 
