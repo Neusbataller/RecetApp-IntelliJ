@@ -2,9 +2,8 @@
 
 > ⚠️ **Nota importante:**
 >
-> Por ahora, la API solo dispone de los endpoints de registro, login y gestión de alergias. Próximamente se irán añadiendo nuevos endpoints (como gestión de recetas, favoritos, etc.) y se avisará al equipo frontend cuando estén disponibles. ¡Mantente atento a las actualizaciones!
-
-Bienvenido a la documentación oficial de la API de Recetas. Esta API permite gestionar usuarios, alergias y recetas, facilitando la integración con aplicaciones móviles como React Native.
+> La API se encuentra en contante desarrollo, por ahora he desarrollado los siguientes endpoints.
+Esta API permite gestionar usuarios, alergias y recetas, facilitando la integración con aplicaciones móviles como React Native.
 
 ---
 
