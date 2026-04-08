@@ -627,6 +627,165 @@ await fetch(`http://localhost:8080/api/recetas/delete/${id}`, {
 
 ---
 
+## Endpoints de Valoraciones
+
+> 🔐 **Autenticación en Valoraciones**
+>
+> - **Públicos:**
+>   - `GET /api/recetas/{recetaId}/valoraciones`
+>   - `GET /api/recetas/{recetaId}/valoraciones/stats`
+> - **Requieren token (JWT):**
+>   - `GET /api/recetas/{recetaId}/valoraciones/mia`
+>   - `POST /api/recetas/{recetaId}/valoraciones`
+>   - `PUT /api/recetas/{recetaId}/valoraciones/mia`
+>   - `DELETE /api/recetas/{recetaId}/valoraciones/mia`
+
+### Listar valoraciones de una receta (público)
+- **GET** `/api/recetas/{recetaId}/valoraciones`
+- **Body:** sin body
+- **Respuesta:**
+```json
+[
+  {
+    "id": 10,
+    "usuarioId": 2,
+    "recetaId": 3,
+    "puntuacion": 5,
+    "comentario": "Me ha encantado",
+    "fechaCreacion": "2026-04-08T15:00:00"
+  }
+]
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/recetas/${recetaId}/valoraciones`);
+const valoraciones = await res.json();
+```
+
+---
+
+### Obtener estadísticas de valoraciones de una receta (público)
+- **GET** `/api/recetas/{recetaId}/valoraciones/stats`
+- **Body:** sin body
+- **Respuesta:**
+```json
+{
+  "recetaId": 3,
+  "mediaPuntuacion": 4.5,
+  "totalValoraciones": 12
+}
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/recetas/${recetaId}/valoraciones/stats`);
+const stats = await res.json();
+```
+
+---
+
+### Obtener mi valoración de una receta (requiere token)
+- **GET** `/api/recetas/{recetaId}/valoraciones/mia`
+- **Headers:** `Authorization: Bearer <token>`
+- **Body:** sin body
+- **Respuesta:**
+```json
+{
+  "id": 21,
+  "usuarioId": 1,
+  "recetaId": 3,
+  "puntuacion": 4,
+  "comentario": "Muy buena, la repetiré",
+  "fechaCreacion": "2026-04-08T15:05:00"
+}
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/recetas/${recetaId}/valoraciones/mia`, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+const miValoracion = await res.json();
+```
+
+---
+
+### Crear mi valoración de una receta (requiere token)
+- **POST** `/api/recetas/{recetaId}/valoraciones`
+- **Headers:** `Authorization: Bearer <token>`
+- **Body:**
+```json
+{
+  "puntuacion": 5,
+  "comentario": "Receta top"
+}
+```
+- **Respuesta:** valoración creada
+
+#### Ejemplo React Native
+```js
+const payload = { puntuacion: 5, comentario: 'Receta top' };
+const res = await fetch(`http://localhost:8080/api/recetas/${recetaId}/valoraciones`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify(payload)
+});
+const created = await res.json();
+```
+
+---
+
+### Actualizar mi valoración de una receta (requiere token)
+- **PUT** `/api/recetas/{recetaId}/valoraciones/mia`
+- **Headers:** `Authorization: Bearer <token>`
+- **Body:**
+```json
+{
+  "puntuacion": 4,
+  "comentario": "La actualizo después de repetirla"
+}
+```
+- **Respuesta:** valoración actualizada
+
+#### Ejemplo React Native
+```js
+const payload = { puntuacion: 4, comentario: 'La actualizo después de repetirla' };
+const res = await fetch(`http://localhost:8080/api/recetas/${recetaId}/valoraciones/mia`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify(payload)
+});
+const updated = await res.json();
+```
+
+---
+
+### Eliminar mi valoración de una receta (requiere token)
+- **DELETE** `/api/recetas/{recetaId}/valoraciones/mia`
+- **Headers:** `Authorization: Bearer <token>`
+- **Body:** sin body
+- **Respuesta exitosa:**
+```text
+Valoracion eliminada correctamente
+```
+
+#### Ejemplo React Native
+```js
+await fetch(`http://localhost:8080/api/recetas/${recetaId}/valoraciones/mia`, {
+  method: 'DELETE',
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+---
+
 ## Endpoints de Favoritos
 
 > 🔐 **Autenticación en Favoritos**

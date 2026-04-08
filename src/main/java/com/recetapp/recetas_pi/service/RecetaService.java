@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -132,7 +133,11 @@ public class RecetaService {
         if (limpio == null) {
             return recetaRepository.findAll();
         }
-        return recetaRepository.findByIngredienteNombre(limpio.toLowerCase(Locale.ROOT));
+
+        String termino = normalizeForSearch(limpio);
+        return recetaRepository.findAll().stream()
+                .filter(r -> recetaContieneIngrediente(r, termino))
+                .collect(Collectors.toList());
     }
 
     public List<Receta> buscarPorIngredientes(List<String> ingredientes, boolean matchAll) {
@@ -141,10 +146,9 @@ public class RecetaService {
             return recetaRepository.findAll();
         }
 
-        if (matchAll) {
-            return recetaRepository.findByAllIngredienteNombres(limpios, limpios.size());
-        }
-        return recetaRepository.findByAnyIngredienteNombres(limpios);
+        return recetaRepository.findAll().stream()
+                .filter(r -> recetaCumpleIngredientes(r, limpios, matchAll))
+                .collect(Collectors.toList());
     }
 
     public List<Receta> buscarPorTag(String tag) {
@@ -312,7 +316,7 @@ public class RecetaService {
         for (String ingrediente : ingredientes) {
             String limpio = normalizeText(ingrediente);
             if (limpio != null) {
-                set.add(limpio.toLowerCase(Locale.ROOT));
+                set.add(normalizeForSearch(limpio));
             }
         }
 
@@ -324,23 +328,63 @@ public class RecetaService {
             return false;
         }
 
-        LinkedHashSet<String> nombres = new LinkedHashSet<>();
+        List<String> nombres = new ArrayList<>();
         for (IngredienteReceta ir : receta.getIngredientesReceta()) {
             if (ir.getIngrediente() != null && ir.getIngrediente().getNombre() != null) {
-                nombres.add(ir.getIngrediente().getNombre().trim().toLowerCase(Locale.ROOT));
+                nombres.add(normalizeForSearch(ir.getIngrediente().getNombre()));
             }
         }
 
         if (matchAll) {
-            return nombres.containsAll(ingredientes);
+            for (String termino : ingredientes) {
+                boolean encontrado = false;
+                for (String nombreIngrediente : nombres) {
+                    if (nombreIngrediente.contains(termino)) {
+                        encontrado = true;
+                        break;
+                    }
+                }
+                if (!encontrado) {
+                    return false;
+                }
+            }
+            return true;
         }
 
-        for (String ingrediente : ingredientes) {
-            if (nombres.contains(ingrediente)) {
-                return true;
+        for (String termino : ingredientes) {
+            for (String nombreIngrediente : nombres) {
+                if (nombreIngrediente.contains(termino)) {
+                    return true;
+                }
             }
         }
         return false;
+    }
+
+    private boolean recetaContieneIngrediente(Receta receta, String termino) {
+        if (receta.getIngredientesReceta() == null || receta.getIngredientesReceta().isEmpty()) {
+            return false;
+        }
+
+        for (IngredienteReceta ir : receta.getIngredientesReceta()) {
+            if (ir.getIngrediente() != null && ir.getIngrediente().getNombre() != null) {
+                String nombre = normalizeForSearch(ir.getIngrediente().getNombre());
+                if (nombre.contains(termino)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private String normalizeForSearch(String value) {
+        String limpio = normalizeText(value);
+        if (limpio == null) {
+            return "";
+        }
+        String sinAcentos = Normalizer.normalize(limpio, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return sinAcentos.toLowerCase(Locale.ROOT);
     }
 
     private int safeTime(Integer value) {

@@ -29,6 +29,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/usuarios/register", "/api/usuarios/login").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/alergias/me").authenticated()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/alergias", "/api/alergias/*").permitAll()
+                // /mia requires JWT even though it is GET and under /api/recetas/**
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/recetas/*/valoraciones/mia").authenticated()
+                // Public recipe endpoints and public rating reads
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/recetas", "/api/recetas/**").permitAll()
                 // Public metric endpoint used in recipe cards/lists without session
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/favoritos/countByReceta/*").permitAll()
