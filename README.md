@@ -498,5 +498,7 @@ await fetch(`http://localhost:8080/api/recetas/delete/${id}`, {
 - Todos los endpoints devuelven errores en formato `{ "error": "mensaje" }` o texto plano.
 - Para pruebas, puedes usar herramientas como Postman o Insomnia.
 - Para utilizar la api en local : `http://localhost:8080`.
+- Swagger API : `http://localhost:8080/swagger-ui/index.html`
+- openAPI: `http://localhost:8080/v3/api-docs`
 
 ---
