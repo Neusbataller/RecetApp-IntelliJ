@@ -261,7 +261,7 @@ await fetch(`http://localhost:8080/api/alergias/${id}`, {
 
 ## Endpoints de Recetas
 
-### 1) Listar recetas
+### Listar recetas
 - **GET** `/api/recetas/getAll`
 - **Query opcional:** `titulo`
 - **Body:** sin body
@@ -296,7 +296,7 @@ const recetas = await res.json();
 
 ---
 
-### 2) Mis recetas (requiere token)
+### Mis recetas (requiere token)
 - **GET** `/api/recetas/getMine`
 - **Body:** sin body
 - **Respuesta:** array de recetas
@@ -311,7 +311,7 @@ const recetas = await res.json();
 
 ---
 
-### 3) Buscar por dificultad
+### Buscar por dificultad
 - **GET** `/api/recetas/searchByDificultad?dificultad=media`
 - **Body:** sin body
 - **Respuesta:** array de recetas
@@ -324,7 +324,7 @@ const recetas = await res.json();
 
 ---
 
-### 4) Buscar por tiempo máximo
+### Buscar por tiempo máximo
 - **GET** `/api/recetas/searchByTiempoMax?maxTiempo=30`
 - **Body:** sin body
 - **Respuesta:** array de recetas
@@ -337,7 +337,7 @@ const recetas = await res.json();
 
 ---
 
-### 5) Búsqueda avanzada
+### Búsqueda avanzada
 - **GET** `/api/recetas/searchAdvanced?titulo=pasta&dificultad=media&tag=rapido&ingredientes=tomate,ajo&matchAll=true&maxTiempo=30`
 - **Body:** sin body
 - **Respuesta:** array de recetas
@@ -351,7 +351,7 @@ const recetas = await res.json();
 
 ---
 
-### 6) Buscar por ingrediente
+### Buscar por ingrediente
 - **GET** `/api/recetas/searchByIngrediente?ingrediente=tomate`
 - **Body:** sin body
 - **Respuesta:** array de recetas
@@ -364,7 +364,7 @@ const recetas = await res.json();
 
 ---
 
-### 7) Buscar por varios ingredientes
+### Buscar por varios ingredientes
 - **GET** `/api/recetas/searchByIngredientes?ingredientes=tomate,ajo&matchAll=true`
 - **Body:** sin body
 - **Respuesta:** array de recetas
@@ -377,7 +377,7 @@ const recetas = await res.json();
 
 ---
 
-### 8) Buscar por tag
+### Buscar por tag
 - **GET** `/api/recetas/searchByTag?tag=vegano`
 - **Body:** sin body
 - **Respuesta:** array de recetas
@@ -390,7 +390,7 @@ const recetas = await res.json();
 
 ---
 
-### 9) Obtener receta por id
+### Obtener receta por id
 - **GET** `/api/recetas/get/{id}`
 - **Body:** sin body
 - **Respuesta:** receta completa
@@ -403,7 +403,7 @@ const receta = await res.json();
 
 ---
 
-### 10) Crear receta (requiere token)
+### Crear receta (requiere token)
 - **POST** `/api/recetas/create`
 - **Body:**
 ```json
@@ -456,7 +456,7 @@ const receta = await res.json();
 
 ---
 
-### 11) Actualizar receta (requiere token)
+### Actualizar receta (requiere token)
 - **PUT** `/api/recetas/update/{id}`
 - **Body:** mismo formato que create
 - **Respuesta:** receta actualizada
@@ -476,7 +476,7 @@ const receta = await res.json();
 
 ---
 
-### 12) Eliminar receta (requiere token)
+### Eliminar receta (requiere token)
 - **DELETE** `/api/recetas/delete/{id}`
 - **Body:** sin body
 - **Respuesta exitosa:**
