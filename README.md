@@ -22,8 +22,7 @@ Obtén el token usando el endpoint de login.
 
 ## Endpoints de Usuario
 
-### Registro de usuario
-
+### 1) Registro de usuario
 - **POST** `/api/usuarios/register`
 - **Body:**
 ```json
@@ -43,6 +42,7 @@ Obtén el token usando el endpoint de login.
   "apellidos": "Pérez",
   "correo": "juan@mail.com",
   "alergias": ["Gluten", "Lácteos"],
+  "favoritos": [],
   "fechaCreacion": "2026-04-07T12:00:00"
 }
 ```
@@ -58,9 +58,9 @@ await fetch('http://localhost:8080/api/usuarios/register', {
 
 ---
 
-### Login
-
+### 2) Login (JSON)
 - **POST** `/api/usuarios/login`
+- **Content-Type:** `application/json`
 - **Body:**
 ```json
 {
@@ -72,7 +72,12 @@ await fetch('http://localhost:8080/api/usuarios/register', {
 ```json
 {
   "token": "<jwt>",
-  "usuario": { "id": 1, "nombre": "Juan" }
+  "usuario": {
+    "id": 1,
+    "nombre": "Juan",
+    "apellidos": "Pérez",
+    "correo": "juan@mail.com"
+  }
 }
 ```
 
@@ -84,39 +89,65 @@ const res = await fetch('http://localhost:8080/api/usuarios/login', {
   body: JSON.stringify({ correo, password })
 });
 const data = await res.json();
-// Guarda data.token para futuras peticiones
 ```
 
 ---
 
-### Obtener usuario autenticado
+### 3) Login (form-urlencoded)
+- **POST** `/api/usuarios/login`
+- **Content-Type:** `application/x-www-form-urlencoded`
+- **Body:** `correo=juan@mail.com&password=123456`
+- **Respuesta:** igual que login JSON
 
+#### Ejemplo React Native
+```js
+const body = new URLSearchParams({ correo, password }).toString();
+const res = await fetch('http://localhost:8080/api/usuarios/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body
+});
+const data = await res.json();
+```
+
+---
+
+### 4) Obtener usuario autenticado (perfil completo)
 - **GET** `/api/usuarios/me`
-- **Headers:**
-  - Authorization: Bearer `<token>`
+- **Headers:** `Authorization: Bearer <token>`
 - **Respuesta:**
 ```json
 {
   "id": 1,
   "nombre": "Juan",
   "apellidos": "Pérez",
-  "correo": "juan@mail.com"
+  "correo": "juan@mail.com",
+  "alergias": ["Gluten", "Lácteos"],
+  "favoritos": [
+    {
+      "recetaId": 3,
+      "titulo": "Pasta rápida",
+      "imagenUrl": "https://example.com/pasta.jpg",
+      "fechaAgregado": "2026-04-08T12:30:00"
+    }
+  ],
+  "fechaCreacion": "2026-04-07T12:00:00"
 }
 ```
 
 #### Ejemplo React Native
 ```js
-await fetch('http://localhost:8080/api/usuarios/me', {
+const res = await fetch('http://localhost:8080/api/usuarios/me', {
   headers: { Authorization: `Bearer ${token}` }
 });
+const me = await res.json();
 ```
 
 ---
 
-### Actualizar perfil
-
+### 5) Actualizar perfil del usuario autenticado
 - **PUT** `/api/usuarios/me`
-- **Headers:** Authorization
+- **Headers:** `Authorization`
 - **Body:**
 ```json
 {
@@ -125,19 +156,11 @@ await fetch('http://localhost:8080/api/usuarios/me', {
   "correo": "nuevo@mail.com"
 }
 ```
-- **Respuesta:**
-```json
-{
-  "id": 1,
-  "nombre": "Nuevo nombre",
-  "apellidos": "Nuevos apellidos",
-  "correo": "nuevo@mail.com"
-}
-```
+- **Respuesta:** usuario actualizado
 
 #### Ejemplo React Native
 ```js
-await fetch('http://localhost:8080/api/usuarios/me', {
+const res = await fetch('http://localhost:8080/api/usuarios/me', {
   method: 'PUT',
   headers: {
     'Content-Type': 'application/json',
@@ -145,14 +168,14 @@ await fetch('http://localhost:8080/api/usuarios/me', {
   },
   body: JSON.stringify({ nombre, apellidos, correo })
 });
+const updated = await res.json();
 ```
 
 ---
 
-### Cambiar contraseña
-
+### 6) Cambiar contraseña del usuario autenticado
 - **PATCH** `/api/usuarios/me/password`
-- **Headers:** Authorization
+- **Headers:** `Authorization`
 - **Body:**
 ```json
 {
@@ -179,7 +202,117 @@ await fetch('http://localhost:8080/api/usuarios/me/password', {
 
 ---
 
+### 7) Reemplazar todas las alergias del usuario autenticado
+- **PUT** `/api/usuarios/me/alergias`
+- **Headers:** `Authorization`
+- **Body:**
+```json
+{
+  "alergias": ["Gluten", "Lácteos"]
+}
+```
+- **Respuesta:** usuario actualizado
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/usuarios/me/alergias', {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify({ alergias: ['Gluten', 'Lácteos'] })
+});
+const updated = await res.json();
+```
+
+---
+
+### 8) Agregar alergias al usuario autenticado (sin borrar las anteriores)
+- **POST** `/api/usuarios/me/alergias`
+- **Headers:** `Authorization: Bearer <token>`
+- **Body:**
+```json
+{
+  "alergias": ["Marisco", "Frutos secos"]
+}
+```
+- **Descripción:** añade las alergias indicadas a las que el usuario ya tenía.
+- **Respuesta:** usuario actualizado (con lista de alergias y favoritos).
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/usuarios/me/alergias', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify({ alergias: ['Marisco', 'Frutos secos'] })
+});
+const updated = await res.json();
+```
+
+---
+
+### 9) Eliminar una alergia específica del usuario autenticado
+- **DELETE** `/api/usuarios/me/alergias/{nombre}`
+- **Headers:** `Authorization: Bearer <token>`
+- **Body:** sin body
+- **Descripción:** elimina una alergia concreta del usuario autenticado.
+- **Ejemplo de ruta:** `/api/usuarios/me/alergias/Gluten`
+- **Respuesta:** usuario actualizado (con la alergia removida).
+
+#### Ejemplo React Native
+```js
+const nombre = encodeURIComponent('Gluten');
+const res = await fetch(`http://localhost:8080/api/usuarios/me/alergias/${nombre}`, {
+  method: 'DELETE',
+  headers: { Authorization: `Bearer ${token}` }
+});
+const updated = await res.json();
+```
+
+---
+
+### 10) Obtener usuario por ID
+- **GET** `/api/usuarios/{id}`
+- **Body:** sin body
+- **Respuesta:** usuario encontrado o 404
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/usuarios/${id}`, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+const data = await res.json();
+```
+
+---
+
 ## Endpoints de Alergias
+
+### Obtener mis alergias (requiere token)
+- **GET** `/api/alergias/me`
+- **Headers:** `Authorization: Bearer <token>`
+- **Descripción:** devuelve únicamente las alergias asociadas al usuario autenticado por JWT.
+- **Respuesta:**
+```json
+[
+  { "id": 1, "nombre": "Gluten" },
+  { "id": 2, "nombre": "Lácteos" }
+]
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/alergias/me', {
+  headers: { Authorization: `Bearer ${token}` }
+});
+const misAlergias = await res.json();
+```
+
+---
 
 ### Listar todas las alergias
 
@@ -494,11 +627,146 @@ await fetch(`http://localhost:8080/api/recetas/delete/${id}`, {
 
 ---
 
+## Endpoints de Favoritos
+
+> 🔐 **Autenticación en Favoritos**
+>
+> - **No requiere token (público):** `GET /api/favoritos/countByReceta/{recetaId}`
+> - **Sí requiere token (JWT):** `getMine`, `isFavorite`, `add`, `remove`, `toggle`
+
+### Ver mis favoritos (requiere token)
+- **GET** `/api/favoritos/getMine`
+- **Body:** sin body
+- **Respuesta:**
+```json
+[
+  {
+    "recetaId": 3,
+    "titulo": "Pasta rápida",
+    "imagenUrl": "https://example.com/pasta.jpg",
+    "fechaAgregado": "2026-04-08T12:30:00"
+  }
+]
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch('http://localhost:8080/api/favoritos/getMine', {
+  headers: { Authorization: `Bearer ${token}` }
+});
+const favoritos = await res.json();
+```
+
+---
+
+### Saber si una receta está en favoritos (requiere token)
+- **GET** `/api/favoritos/isFavorite/{recetaId}`
+- **Body:** sin body
+- **Respuesta:**
+```json
+true
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/favoritos/isFavorite/${recetaId}`, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+const isFavorite = await res.json();
+```
+
+---
+
+### Contar favoritos de una receta (publico, NO requiere token)
+- **GET** `/api/favoritos/countByReceta/{recetaId}`
+- **Body:** sin body
+- **Respuesta:**
+```json
+12
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/favoritos/countByReceta/${recetaId}`);
+const totalFavoritos = await res.json();
+```
+
+---
+
+### Añadir receta a favoritos (requiere token)
+- **POST** `/api/favoritos/add/{recetaId}`
+- **Body:** sin body
+- **Respuesta:**
+```json
+{
+  "recetaId": 3,
+  "titulo": "Pasta rápida",
+  "imagenUrl": "https://example.com/pasta.jpg",
+  "fechaAgregado": "2026-04-08T12:30:00"
+}
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/favoritos/add/${recetaId}`, {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${token}` }
+});
+const favorito = await res.json();
+```
+
+---
+
+### Eliminar receta de favoritos (requiere token)
+- **DELETE** `/api/favoritos/remove/{recetaId}`
+- **Body:** sin body
+- **Respuesta exitosa:**
+```text
+Favorito eliminado
+```
+
+#### Ejemplo React Native
+```js
+await fetch(`http://localhost:8080/api/favoritos/remove/${recetaId}`, {
+  method: 'DELETE',
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+---
+
+### Toggle favorito (requiere token)
+- **POST** `/api/favoritos/toggle/{recetaId}`
+- **Body:** sin body
+- **Respuesta (agrega):**
+```json
+{
+  "favorito": true,
+  "mensaje": "Favorito agregado"
+}
+```
+- **Respuesta (elimina):**
+```json
+{
+  "favorito": false,
+  "mensaje": "Favorito eliminado"
+}
+```
+
+#### Ejemplo React Native
+```js
+const res = await fetch(`http://localhost:8080/api/favoritos/toggle/${recetaId}`, {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${token}` }
+});
+const result = await res.json();
+```
+
+---
+
 ## Notas
 - Todos los endpoints devuelven errores en formato `{ "error": "mensaje" }` o texto plano.
 - Para pruebas, puedes usar herramientas como Postman o Insomnia.
 - Para utilizar la api en local : `http://localhost:8080`.
 - Swagger API : `http://localhost:8080/swagger-ui/index.html`
 - openAPI: `http://localhost:8080/v3/api-docs`
-
----

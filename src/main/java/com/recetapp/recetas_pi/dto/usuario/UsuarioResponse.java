@@ -1,13 +1,17 @@
 package com.recetapp.recetas_pi.dto.usuario;
 
+import com.recetapp.recetas_pi.dto.favorito.FavoritoResponse;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class UsuarioResponse {
     private Long id;
     private String nombre;
     private String apellidos;
     private String correo;
-    private java.util.List<String> alergias;
+    private List<String> alergias;
+    private List<FavoritoResponse> favoritos;
     private LocalDateTime fechaCreacion;
 
     public Long getId() {
@@ -42,12 +46,20 @@ public class UsuarioResponse {
         this.correo = correo;
     }
 
-    public java.util.List<String> getAlergias() {
+    public List<String> getAlergias() {
         return alergias;
     }
 
-    public void setAlergias(java.util.List<String> alergias) {
+    public void setAlergias(List<String> alergias) {
         this.alergias = alergias;
+    }
+
+    public List<FavoritoResponse> getFavoritos() {
+        return favoritos;
+    }
+
+    public void setFavoritos(List<FavoritoResponse> favoritos) {
+        this.favoritos = favoritos;
     }
 
     public LocalDateTime getFechaCreacion() {

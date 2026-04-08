@@ -27,8 +27,11 @@ public class SecurityConfig {
                         "/swagger-ui.html"
                 ).permitAll()
                 .requestMatchers("/api/usuarios/register", "/api/usuarios/login").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/alergias/me").authenticated()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/alergias", "/api/alergias/*").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/recetas", "/api/recetas/**").permitAll()
+                // Public metric endpoint used in recipe cards/lists without session
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/favoritos/countByReceta/*").permitAll()
                 .anyRequest().authenticated()
             );
 

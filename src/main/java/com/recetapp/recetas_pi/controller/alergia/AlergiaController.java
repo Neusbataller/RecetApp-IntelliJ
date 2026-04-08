@@ -3,11 +3,15 @@ package com.recetapp.recetas_pi.controller.alergia;
 import com.recetapp.recetas_pi.dto.alergia.AlergiaCreateRequest;
 import com.recetapp.recetas_pi.dto.alergia.AlergiaResponse;
 import com.recetapp.recetas_pi.model.Alergia;
+import com.recetapp.recetas_pi.model.Usuario;
 import com.recetapp.recetas_pi.service.AlergiaService;
+import com.recetapp.recetas_pi.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +35,9 @@ public class AlergiaController {
     @Autowired
     private AlergiaService alergiaService;
 
+    @Autowired
+    private UsuarioService usuarioService;
+
     /**
      * Obtener todas las alergias
      * GET /api/alergias
@@ -47,6 +54,33 @@ public class AlergiaController {
         List<AlergiaResponse> response = new ArrayList<>();
         for (Alergia a : alergias) {
             response.add(toResponse(a));
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Obtener alergias del usuario autenticado.
+     * GET /api/alergias/me
+     *
+     * Requiere JWT y devuelve solo las alergias del usuario logeado.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getMine() {
+        String correoAuth = getCorreoAutenticado();
+        if (correoAuth == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+        }
+
+        Optional<Usuario> usuario = usuarioService.getUsuarioByCorreo(correoAuth);
+        if (usuario.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+        }
+
+        List<AlergiaResponse> response = new ArrayList<>();
+        if (usuario.get().getAlergias() != null) {
+            for (Alergia a : usuario.get().getAlergias()) {
+                response.add(toResponse(a));
+            }
         }
         return ResponseEntity.ok(response);
     }
@@ -132,6 +166,18 @@ public class AlergiaController {
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
         }
+    }
+
+    private String getCorreoAutenticado() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() == null) {
+            return null;
+        }
+        Object principal = auth.getPrincipal();
+        if (principal instanceof String correo && !"anonymousUser".equals(correo)) {
+            return correo;
+        }
+        return null;
     }
 
     private AlergiaResponse toResponse(Alergia a) {

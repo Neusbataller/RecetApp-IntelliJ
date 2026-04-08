@@ -1,5 +1,6 @@
 package com.recetapp.recetas_pi.controller.usuario;
 
+import com.recetapp.recetas_pi.dto.favorito.FavoritoResponse;
 import com.recetapp.recetas_pi.dto.usuario.UsuarioRegistroRequest;
 import com.recetapp.recetas_pi.dto.usuario.UsuarioResponse;
 import com.recetapp.recetas_pi.dto.usuario.UsuarioLoginRequest;
@@ -10,7 +11,9 @@ import com.recetapp.recetas_pi.dto.usuario.AuthResponse;
 import com.recetapp.recetas_pi.security.JwtUtil;
 import com.recetapp.recetas_pi.model.Usuario;
 import com.recetapp.recetas_pi.model.Alergia;
+import com.recetapp.recetas_pi.model.Favorito;
 import com.recetapp.recetas_pi.service.UsuarioService;
+import com.recetapp.recetas_pi.repository.FavoritoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +46,9 @@ public class UsuarioController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private FavoritoRepository favoritoRepository;
 
     /**
      * Registro de usuario
@@ -338,6 +344,21 @@ public class UsuarioController {
             }
             r.setAlergias(nombres);
         }
+
+        List<Favorito> favoritos = favoritoRepository.findByUsuarioCorreoOrderByFechaAgregadoDesc(u.getCorreo());
+        List<FavoritoResponse> favoritosResponse = new ArrayList<>();
+        for (Favorito favorito : favoritos) {
+            FavoritoResponse fr = new FavoritoResponse();
+            if (favorito.getReceta() != null) {
+                fr.setRecetaId(favorito.getReceta().getId());
+                fr.setTitulo(favorito.getReceta().getTitulo());
+                fr.setImagenUrl(favorito.getReceta().getImagenUrl());
+            }
+            fr.setFechaAgregado(favorito.getFechaAgregado());
+            favoritosResponse.add(fr);
+        }
+        r.setFavoritos(favoritosResponse);
+
         r.setFechaCreacion(u.getFechaCreacion());
         return r;
     }
