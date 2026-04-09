@@ -2,41 +2,44 @@ package com.recetapp.recetas_pi.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
-@Table(name = "listas")
+@Table(name = "recuperacion_password")
 @Data
-public class Lista {
+public class RecuperacionPassword {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    @Column(nullable = false, length = 100)
-    private String nombre;
+    @Column(nullable = false, unique = true, length = 255)
+    private String token;
 
-    @Column(name = "imagen_url", length = 500)
-    private String imagenUrl;
-
-    @Column(name = "fecha_creacion")
+    @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 
-    @OneToMany(mappedBy = "lista", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ListaReceta> listaRecetas;
+    @Column(name = "fecha_expiracion", nullable = false)
+    private LocalDateTime fechaExpiracion;
+
+    @Column(nullable = false)
+    private Boolean usado;
 
     @PrePersist
     public void prePersist() {
         if (fechaCreacion == null) {
             fechaCreacion = LocalDateTime.now();
         }
+        if (usado == null) {
+            usado = false;
+        }
     }
 
-    // Explicit getters and setters (useful if Lombok is not active in the IDE)
     public Long getId() {
         return id;
     }
@@ -53,20 +56,12 @@ public class Lista {
         this.usuario = usuario;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getToken() {
+        return token;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getImagenUrl() {
-        return imagenUrl;
-    }
-
-    public void setImagenUrl(String imagenUrl) {
-        this.imagenUrl = imagenUrl;
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public LocalDateTime getFechaCreacion() {
@@ -77,11 +72,19 @@ public class Lista {
         this.fechaCreacion = fechaCreacion;
     }
 
-    public List<ListaReceta> getListaRecetas() {
-        return listaRecetas;
+    public LocalDateTime getFechaExpiracion() {
+        return fechaExpiracion;
     }
 
-    public void setListaRecetas(List<ListaReceta> listaRecetas) {
-        this.listaRecetas = listaRecetas;
+    public void setFechaExpiracion(LocalDateTime fechaExpiracion) {
+        this.fechaExpiracion = fechaExpiracion;
+    }
+
+    public Boolean getUsado() {
+        return usado;
+    }
+
+    public void setUsado(Boolean usado) {
+        this.usado = usado;
     }
 }

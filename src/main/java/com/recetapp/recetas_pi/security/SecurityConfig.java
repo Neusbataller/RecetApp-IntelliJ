@@ -27,6 +27,8 @@ public class SecurityConfig {
                         "/swagger-ui.html"
                 ).permitAll()
                 .requestMatchers("/api/usuarios/register", "/api/usuarios/login").permitAll()
+                .requestMatchers("/api/auth/password/forgot", "/api/auth/password/reset").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/auth/password/validate/*").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/alergias/me").authenticated()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/alergias", "/api/alergias/*").permitAll()
                 // /mia requires JWT even though it is GET and under /api/recetas/**
