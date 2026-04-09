@@ -6,6 +6,8 @@
 
 ---
 
+login, sin peticiones post
+
 ## Autenticación
 
 La mayoría de los endpoints requieren autenticación mediante JWT. El token debe enviarse en el header:
